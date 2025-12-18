@@ -24,16 +24,13 @@ export const useLazyTree = (): UseLazyTreeResult => {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [selectedId, setSelectedId] = useState('');
 
-  // dedupe concurrent loads: parentId -> promise
   const pendingRef = useRef<Map<string, Promise<void>>>(new Map());
 
   const rootNodes = childrenByParent.get('') ?? [];
 
   const ensureChildrenLoaded = useCallback(async (parentId: string) => {
-    // already cached
     if (childrenByParent.has(parentId)) return;
 
-    // already loading
     const pending = pendingRef.current.get(parentId);
     if (pending) return pending;
 
@@ -105,7 +102,6 @@ export const useLazyTree = (): UseLazyTreeResult => {
 
         setSelectedId(path);
       } catch (e) {
-        setStatus('error');
         setError(e instanceof Error ? e.message : String(e));
       }
     },

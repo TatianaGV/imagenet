@@ -40,4 +40,8 @@ async function main() {
   await pool.end();
 }
 
-main().catch(console.error);
+main().catch(async (e) => {
+  console.error(e);
+  await pool.end();
+  process.exit(1);
+});

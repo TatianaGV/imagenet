@@ -8,7 +8,6 @@ type XmlSynset = {
   '@_words'?: string;
   '@_wnid'?: string;
   '@_gloss'?: string;
-  // В ЭТОМ XML numImages нет, но оставим на будущее:
   '@_numImages'?: string | number;
   synset?: XmlSynset[] | XmlSynset;
   [k: string]: any;
