@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS imagenet_tuples (
+  name TEXT PRIMARY KEY,
+  size INTEGER NOT NULL
+);
