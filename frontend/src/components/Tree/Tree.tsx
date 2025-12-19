@@ -28,7 +28,7 @@ export const Tree = ({
     [onToggle],
   );
 
-  if (nodes.length === 0) return null;
+  if (!nodes.length) return null;
 
   return (
     <ul className={styles.list} role="tree">
