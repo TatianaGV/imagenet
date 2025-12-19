@@ -15,11 +15,11 @@ export const App = () => {
     jumpTo,
   } = useLazyTree();
 
-  const search = useDebouncedSearch({ delayMs: 300 });
+  const search = useDebouncedSearch({ delayMs: 300, minLength: 3 });
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Finviz assignment</h1>
+      <h1 className={styles.title}>ImageNet assignment</h1>
 
       <div className={styles.grid}>
         <div className={styles.card}>

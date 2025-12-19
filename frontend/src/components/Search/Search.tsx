@@ -42,7 +42,7 @@ export const Search = ({ query, loading, items, onPick, onChange }: Props) => {
 
   return (
     <section className={styles.panel} aria-label="Search panel">
-      <b>Search</b>
+      <b>Search (3 characters or more)</b>
 
       <div className={styles.inputWrap}>
         <input

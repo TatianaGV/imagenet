@@ -6,33 +6,32 @@ const NODES_SQL = `
 WITH params AS (
   SELECT
     $1::text AS parent,
+    ' > '::text AS sep,
     CASE
       WHEN $1::text = '' THEN 0
-      ELSE array_length(string_to_array($1::text, '${SEP}'), 1)
+      ELSE array_length(string_to_array($1::text, ' > '), 1)
     END AS d
-),
-candidates AS (
-  SELECT
-    (string_to_array(t.name, '${SEP}')) AS parts
-  FROM imagenet_tuples t, params p
-  WHERE
-    (p.d = 0)
-    OR (
-      t.name LIKE p.parent || '${SEP}%' AND
-      array_to_string((string_to_array(t.name, '${SEP}'))[1:p.d], '${SEP}') = p.parent
-    )
 ),
 children AS (
   SELECT DISTINCT
-    parts[(SELECT d FROM params) + 1] AS child_name
-  FROM candidates
-  WHERE parts[(SELECT d FROM params) + 1] IS NOT NULL
+    CASE
+      WHEN p.d = 0 THEN split_part(t.name, p.sep, 1)
+      ELSE split_part(t.name, p.sep, p.d + 1)
+    END AS child_name
+  FROM imagenet_tuples t
+  CROSS JOIN params p
+  WHERE
+    (p.d = 0)
+    OR (
+      t.name LIKE p.parent || p.sep || '%'
+      AND split_part(t.name, p.sep, p.d + 1) <> ''
+    )
 ),
 final AS (
   SELECT
     CASE
       WHEN p.d = 0 THEN c.child_name
-      ELSE p.parent || '${SEP}' || c.child_name
+      ELSE p.parent || p.sep || c.child_name
     END AS id,
     c.child_name AS name,
     COALESCE(t.size, 0) AS size,
@@ -42,16 +41,16 @@ final AS (
       WHERE t2.name LIKE (
         CASE
           WHEN p.d = 0 THEN c.child_name
-          ELSE p.parent || '${SEP}' || c.child_name
+          ELSE p.parent || p.sep || c.child_name
         END
-      ) || '${SEP}%'
+      ) || p.sep || '%'
     ) AS "hasChildren"
   FROM children c
   CROSS JOIN params p
   LEFT JOIN imagenet_tuples t
     ON t.name = CASE
       WHEN p.d = 0 THEN c.child_name
-      ELSE p.parent || '${SEP}' || c.child_name
+      ELSE p.parent || p.sep || c.child_name
     END
 )
 SELECT *
