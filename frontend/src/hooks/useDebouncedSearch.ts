@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SearchItem } from '../api/types';
 import { searchNodes } from '../api';
 import { useDebouncedValue } from './useDebouncedValue';
@@ -8,56 +8,84 @@ type UseDebouncedSearchOptions = {
   minLength?: number;
 };
 
-export const useDebouncedSearch = (options: UseDebouncedSearchOptions = {}) => {
+type UseDebouncedSearchResult = {
+  query: string;
+  items: SearchItem[];
+  loading: boolean;
+  error: unknown | null;
+  setQuery: (value: string) => void;
+  reset: () => void;
+};
+
+export const useDebouncedSearch = (
+  options: UseDebouncedSearchOptions = {},
+): UseDebouncedSearchResult => {
   const { delayMs = 300, minLength = 1 } = options;
 
-  const [q, setQ] = useState('');
-  const debouncedQ = useDebouncedValue(q.trim(), delayMs);
+  const [query, setQueryState] = useState('');
+  const trimmedQuery = useMemo(() => query.trim(), [query]);
+  const debouncedQuery = useDebouncedValue(trimmedQuery, delayMs);
 
-  const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<SearchItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<unknown | null>(null);
 
-  const reqIdRef = useRef(0);
+  const requestIdRef = useRef(0);
+
+  const setQuery = useCallback((value: string) => {
+    setQueryState(value);
+  }, []);
+
+  const reset = useCallback(() => {
+    requestIdRef.current += 1;
+    setQueryState('');
+    setItems([]);
+    setError(null);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    const query = debouncedQ;
+    const q = debouncedQuery;
 
-    if (!query || query.length < minLength) {
+    if (q.length < minLength) {
+      requestIdRef.current += 1;
       setItems([]);
+      setError(null);
       setLoading(false);
       return;
     }
 
-    let alive = true;
-    const reqId = ++reqIdRef.current;
+    const requestId = ++requestIdRef.current;
 
     setLoading(true);
+    setError(null);
 
-    void (async () => {
+    (async () => {
       try {
-        const res = await searchNodes(query);
-        // only latest request wins
-        if (!alive || reqId !== reqIdRef.current) return;
+        const res = await searchNodes(q);
+
+        if (requestId !== requestIdRef.current) return;
+
         setItems(res.items);
-      } catch {
-        if (!alive || reqId !== reqIdRef.current) return;
+      } catch (e) {
+        if (requestId !== requestIdRef.current) return;
+
         setItems([]);
+        setError(e);
       } finally {
-        if (!alive || reqId !== reqIdRef.current) return;
+        if (requestId !== requestIdRef.current) return;
+
         setLoading(false);
       }
     })();
+  }, [debouncedQuery, minLength]);
 
-    return () => {
-      alive = false;
-    };
-  }, [debouncedQ, minLength]);
-
-  const reset = () => {
-    setQ('');
-    setItems([]);
-    setLoading(false);
+  return {
+    query,
+    items,
+    loading,
+    error,
+    setQuery,
+    reset,
   };
-
-  return { q, setQ, items, loading, reset };
-}
+};

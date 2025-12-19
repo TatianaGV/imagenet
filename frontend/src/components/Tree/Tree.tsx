@@ -1,9 +1,10 @@
+import { useCallback } from 'react';
 import type { ApiNode } from '../../api/types';
 import type { ChildrenCache } from '../../hooks/useLazyTree';
-import { TreeNode } from './components/TreeNode/TreeNode';
 import styles from './Tree.module.scss';
+import { TreeItem } from './components/TreeItem/TreeItem';
 
-type Props = {
+type TreeProps = {
   nodes: ApiNode[];
   level?: number;
   expanded: Set<string>;
@@ -19,37 +20,29 @@ export const Tree = ({
   selectedId,
   childrenByParent,
   onToggle,
-}: Props) => {
+}: TreeProps) => {
+  const handleToggle = useCallback(
+    (node: ApiNode) => {
+      void onToggle(node);
+    },
+    [onToggle],
+  );
+
+  if (nodes.length === 0) return null;
+
   return (
-    <ul className={styles.list}>
-      {nodes.map((node) => {
-        const isExpanded = expanded.has(node.id);
-        const isSelected = selectedId === node.id;
-        const children = childrenByParent.get(node.id) ?? [];
-
-        return (
-          <li key={node.id}>
-            <TreeNode
-              node={node}
-              level={level}
-              isExpanded={isExpanded}
-              isSelected={isSelected}
-              onToggle={onToggle}
-            />
-
-            {isExpanded && children.length > 0 && (
-              <Tree
-                nodes={children}
-                level={level + 1}
-                expanded={expanded}
-                selectedId={selectedId}
-                childrenByParent={childrenByParent}
-                onToggle={onToggle}
-              />
-            )}
-          </li>
-        );
-      })}
+    <ul className={styles.list} role="tree">
+      {nodes.map((node) => (
+        <TreeItem
+          key={node.id}
+          node={node}
+          level={level}
+          expanded={expanded}
+          selectedId={selectedId}
+          childrenByParent={childrenByParent}
+          onToggle={handleToggle}
+        />
+      ))}
     </ul>
   );
-}
+};

@@ -40,8 +40,8 @@ export const App = () => {
 
         <div className={styles.rightCol}>
           <Search
-            q={search.q}
-            onChange={search.setQ}
+            query={search.query}
+            onChange={search.setQuery}
             loading={search.loading}
             items={search.items}
             onPick={jumpTo}
