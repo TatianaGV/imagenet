@@ -13,7 +13,7 @@ export async function getNodesService(input: {
   offset?: unknown;
 }): Promise<{ parent: string; limit: number; offset: number; nodes: ApiNode[] }> {
   const parent = String(input.parent ?? '').trim();
-  const limit = clampInt(input.limit, 100, 1, 200);
+  const limit = clampInt(input.limit, 50, 1, 200);
   const offset = clampInt(input.offset, 0, 0, Number.MAX_SAFE_INTEGER);
 
   const nodes = await fetchNodes({ parent, limit, offset });
@@ -25,7 +25,7 @@ export async function searchService(input: {
   limit?: unknown;
 }): Promise<{ q: string; items: SearchItem[] }> {
   const q = String(input.q ?? '').trim();
-  const limit = clampInt(input.limit, 100, 1, 200);
+  const limit = clampInt(input.limit, 50, 1, 200);
 
   if (!q) return { q, items: [] };
 
